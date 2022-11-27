@@ -95,9 +95,6 @@ class ActivityLog:
     def __init__(self):
         self.timestamps = {}
 
-    def reset(self):
-        self.timestamps = {}
-
     def start_activity(self):
         # Append a new event line marked "Start"
         # self.timestamps = self.timestamps + [datetime.datetime.now().astimezone(),]
@@ -112,21 +109,21 @@ class ActivityLog:
         # Append a new event line marked "Rest"
         pass
 
+    def append_line(self, string):
+        pass
 
     def total(self):
         pass
 
     def print(self):
-        for i in range(len(log.timestamps)):
-            print("Start- ", log.timestamps[i][0])
-            if len(log.timestamps[i]) == 2:
-                print("Stop-  ", log.timestamps[i][1])
+        print(self.toJSON())
 
     def toJSON(self):
         return json.dumps(self.timestamps,sort_keys=True,indent=4)
 
 
-log = {
+log = ActivityLog()
+log.timestamps = {
   "timestamps": [
     {"event": "reset_time", "timestamp": 1669591502.1348062},
     {"event": "activity1_start", "timestamp": 1669591585.721765},
@@ -137,10 +134,6 @@ log = {
   ]
 }
 
-# sort the result alphabetically by keys:
-print(json.dumps(x, indent=4, sort_keys=True))
-
-log = ActivityLog()
 log.start_activity()
 time.sleep(3)
 log.stop_activity()
