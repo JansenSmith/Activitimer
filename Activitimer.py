@@ -93,16 +93,25 @@ class Activitimer:
 class ActivityLog:
     # Timestamp is a 2xN list, with start times in the first column and stop times in the second column
     def __init__(self):
-        self.timestamps = []
+        self.timestamps = {}
 
     def reset(self):
-        self.timestamps = []
+        self.timestamps = {}
 
     def start_activity(self):
-        self.timestamps = self.timestamps + [(datetime.datetime.now().astimezone(),)]
+        # Append a new event line marked "Start"
+        # self.timestamps = self.timestamps + [datetime.datetime.now().astimezone(),]
+        pass
 
     def stop_activity(self):
-        self.timestamps[-1] = [self.timestamps[-1][-1], datetime.datetime.now().astimezone()]
+        # Append a new event line marked "Stop"
+        # self.timestamps[-1] = [self.timestamps[-1][-1], datetime.datetime.now().astimezone()]
+        pass
+
+    def reset(self):
+        # Append a new event line marked "Rest"
+        pass
+
 
     def total(self):
         pass
@@ -113,17 +122,18 @@ class ActivityLog:
             if len(log.timestamps[i]) == 2:
                 print("Stop-  ", log.timestamps[i][1])
 
+    def toJSON(self):
+        return json.dumps(self.timestamps,sort_keys=True,indent=4)
 
-x = {
-  "name": "John",
-  "age": 30,
-  "married": True,
-  "divorced": False,
-  "children": ("Ann","Billy"),
-  "pets": None,
-  "cars": [
-    {"model": "BMW 230", "mpg": 27.5},
-    {"model": "Ford Edge", "mpg": 24.1}
+
+log = {
+  "timestamps": [
+    {"event": "reset_time", "timestamp": 1669591502.1348062},
+    {"event": "activity1_start", "timestamp": 1669591585.721765},
+    {"event": "activity1_stop", "timestamp": 1669591605.3921225},
+    {"event": "reset_time", "timestamp": 1669591619.0003414},
+    {"event": "activity1_start", "timestamp": 1669591665.3338575},
+    {"event": "activity1_stop", "timestamp": 1669591707.532953}
   ]
 }
 
