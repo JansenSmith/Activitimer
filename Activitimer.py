@@ -119,6 +119,8 @@ time.sleep(3)
 log.stop_activity()
 time.sleep(2)
 log.start_activity()
+time.sleep(2)
+log.stop_activity()
 log.print()
 
 #before = datetime.datetime.now().astimezone()
