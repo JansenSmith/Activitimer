@@ -8,6 +8,7 @@ import datetime
 import tkinter as tk
 from win10toast import ToastNotifier
 from playsound import playsound
+import json
 
 
 class Activitimer:
@@ -112,6 +113,22 @@ class ActivityLog:
             if len(log.timestamps[i]) == 2:
                 print("Stop-  ", log.timestamps[i][1])
 
+
+x = {
+  "name": "John",
+  "age": 30,
+  "married": True,
+  "divorced": False,
+  "children": ("Ann","Billy"),
+  "pets": None,
+  "cars": [
+    {"model": "BMW 230", "mpg": 27.5},
+    {"model": "Ford Edge", "mpg": 24.1}
+  ]
+}
+
+# sort the result alphabetically by keys:
+print(json.dumps(x, indent=4, sort_keys=True))
 
 log = ActivityLog()
 log.start_activity()
