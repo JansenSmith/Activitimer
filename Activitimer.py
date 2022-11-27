@@ -10,14 +10,14 @@ from win10toast import ToastNotifier
 from playsound import playsound
 
 
-class RealtimeBudget:
+class Activitimer:
 
     def __init__(self):
         self.log = ActivityLog()
         font_choice = ("Helvetica", 30)
         self.root = tk.Tk()
         self.root.geometry("280x160")
-        self.root.title("Current Budget")
+        self.root.title("Time Remaining")
 
 #        self.time_entry = tk.Entry(self.root, font=font_choice)
 #        self.time_entry.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
@@ -77,7 +77,7 @@ class RealtimeBudget:
 
             if full_seconds > 500:
                 toast = ToastNotifier()
-                toast.show_toast("Realtime Budget", "Time is up!", duration=3)
+                toast.show_toast("Activitimer", "Time is up!", duration=3)
 
 #        if not self.stop_loop:
 
@@ -129,4 +129,4 @@ log.print()
 #delt = after - before
 #is_less = delt < datetime.timedelta(0,4)
 #print("This is text", is_less)
-#RealtimeBudget()
+#Activitimer()
