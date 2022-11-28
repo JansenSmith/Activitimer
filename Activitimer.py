@@ -19,7 +19,7 @@ class Activitimer:
         font_choice = ("Helvetica", 30)
         self.root = tk.Tk()
         self.root.geometry("335x160")
-        self.root.title("Time Remaining")
+        self.root.title("Activitimer")
 
         #        self.time_entry = tk.Entry(self.root, font=font_choice)
         #        self.time_entry.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
@@ -41,34 +41,20 @@ class Activitimer:
         t = threading.Thread(target=self.start)
         t.start()
 
+    def alarm(self):
+        toast = ToastNotifier()
+        toast.show_toast("Activitimer", "Time is up!", duration=3)
+
     def start(self):
-        self.activity_button.config(text="Stop Activity")
-        full_seconds = 0
-        """
-        hours, minutes, seconds = 0, 0, 0
-        string_split = self.time_entry.get().split(":")
-        if len(string_split) == 3:
-            hours = string_split[0]
-            minutes = string_split[1]
-            seconds = string_split[2]
-        elif len(string_split) == 2:
-            minutes = string_split[0]
-            seconds = string_split[1]
-        elif len(string_split) == 1:
-            seconds = string_split[0]
-        else:
-            print("Invalid Time Format")
-            return
-
-        hours = int(hours)
-        minutes = int(minutes)
-        seconds = int(seconds)
-
-        full_seconds = hours * 60 * 60 + minutes * 60 + seconds
-        """
-
         while True:
-            full_seconds = self.act1.time_avail()
+            full_seconds_true = self.act1.time_avail()
+
+            if full_seconds_true < 0:
+                full_seconds = -full_seconds_true
+                self.time_label.config(fg="red")
+            else:
+                full_seconds = full_seconds_true
+                self.time_label.config(fg="black")
 
             minutes, seconds = divmod(full_seconds, 60)
             hours, minutes = divmod(minutes, 60)
@@ -77,17 +63,20 @@ class Activitimer:
             self.root.update()
             time.sleep(0.01)
 
-            if full_seconds < 0:
-                toast = ToastNotifier()
-                toast.show_toast("Activitimer", "Time is up!", duration=3)
+            if full_seconds_true < 0 and self.activity:
+                alarm = threading.Thread(target=self.alarm())
+                alarm.start()
 
     #        if not self.stop_loop:
 
     def start_activity(self):
-        # self.log.start()
+        self.activity = True
+        self.act1.activity1_start()
         self.activity_button.config(text="Stop Activity", command=self.stop_activity)
 
     def stop_activity(self):
+        self.activity = False
+        self.act1.activity1_stop()
         self.activity_button.config(text="Start Activity", command=self.start_activity)
 
 
@@ -95,14 +84,14 @@ class ActivityLog:
     # Timestamp is a 2xN list, with start times in the first column and stop times in the second column
     def __init__(self):
         self.log = []
-        self.hrs_per_day = 12
+        self.hrs_per_day = 1.5
         self.reset()
 
-    def start_activity(self):
+    def activity1_start(self):
         # Append a new event line marked "activity1_start"
         self.append_entry("activity1_start")
 
-    def stop_activity(self):
+    def activity1_stop(self):
         # Append a new event line marked "activity1_stop"
         self.append_entry("activity1_stop")
 
@@ -112,7 +101,7 @@ class ActivityLog:
         pass
 
     def append_entry(self, pass_str):
-        self.log = self.log + [LogEntry(pass_str, time.time())]
+        self.log.append(LogEntry(pass_str, time.time()))
         pass
 
     def time_avail(self):
@@ -125,7 +114,32 @@ class ActivityLog:
         return (time.time() - self.last_reset()) * (self.hrs_per_day / 24)
 
     def time_spent(self):
-        return 0
+        time_spent = 0
+        culled, is_started = self.culled_legacy(self.last_reset())
+        for x in culled:
+            if x.event == "activity1_stop":
+                time_spent += x.timestamp
+            elif x.event == "activity1_start":
+                time_spent -= x.timestamp
+            else:
+                raise Exception("The log should only have start and stop activities here. "
+                                "Something has gone terribly wrong.")
+        if is_started:
+            time_spent += time.time()-self.log[-1].timestamp
+        return time_spent
+
+    def culled_legacy(self, timestamp):
+        # returns the log, with all entries BEFORE a given timestamp removed
+        # does not itself modify the existing log
+        culled = []
+        is_started = False
+        for x in self.log:
+            if x.timestamp > timestamp:
+                culled.append(x)
+        if bool(culled) and culled[-1].event == "activity1_start":
+            is_started = True
+            culled = culled[0:-1]
+        return culled, is_started
 
     def last_reset(self):
         last_timestamp = 0
@@ -134,6 +148,9 @@ class ActivityLog:
                 last_timestamp = x.timestamp
         return last_timestamp
 
+    def sort(self):
+        #untested
+        self.log = self.log.sort(key="timestamp")
 
     def print(self):
         print(self.toJSON())
@@ -175,11 +192,11 @@ if __name__ == '__main__':
       ]
     }"""
 
-    """act.log = [
-        LogEntry('reset_time', 1669591502.1348062),
+    """    act = [
+        #LogEntry('reset_time', 1669591502.1348062),
         LogEntry('activity1_start', 1669591585.721765),
         LogEntry('activity1_stop', 1669591605.3921225),
-        LogEntry('reset_time', 1669591619.0003414),
+        #LogEntry('reset_time', 1669591619.0003414),
         LogEntry('activity1_start', 1669591665.3338575),
         LogEntry('activity1_stop', 1669591707.532953),
     ]"""
