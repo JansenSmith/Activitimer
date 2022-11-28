@@ -3,8 +3,9 @@
 
 import threading
 import time
+# import numpy as np
 import datetime
-#import pyzt
+# import pyzt
 import tkinter as tk
 from win10toast import ToastNotifier
 from playsound import playsound
@@ -14,14 +15,14 @@ import json
 class Activitimer:
 
     def __init__(self):
-        self.log = ActivityLog()
+        self.act1 = ActivityLog()
         font_choice = ("Helvetica", 30)
         self.root = tk.Tk()
-        self.root.geometry("280x160")
+        self.root.geometry("335x160")
         self.root.title("Time Remaining")
 
-#        self.time_entry = tk.Entry(self.root, font=font_choice)
-#        self.time_entry.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
+        #        self.time_entry = tk.Entry(self.root, font=font_choice)
+        #        self.time_entry.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
 
         self.time_label = tk.Label(self.root, font=font_choice, text="Time: 00:00:00")
         self.time_label.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
@@ -67,23 +68,23 @@ class Activitimer:
         """
 
         while True:
-            full_seconds += 1
+            full_seconds = self.act1.time_avail()
 
             minutes, seconds = divmod(full_seconds, 60)
             hours, minutes = divmod(minutes, 60)
 
-            self.time_label.config(text=f"Time: {hours:02d}:{minutes:02d}:{seconds:02d}")
+            self.time_label.config(text=f"Time: {int(hours):02d}:{int(minutes):02d}:{seconds:05.2f}")
             self.root.update()
-            time.sleep(1)
+            time.sleep(0.01)
 
-            if full_seconds > 500:
+            if full_seconds < 0:
                 toast = ToastNotifier()
                 toast.show_toast("Activitimer", "Time is up!", duration=3)
 
-#        if not self.stop_loop:
+    #        if not self.stop_loop:
 
     def start_activity(self):
-        #self.log.start()
+        # self.log.start()
         self.activity_button.config(text="Stop Activity", command=self.stop_activity)
 
     def stop_activity(self):
@@ -93,60 +94,113 @@ class Activitimer:
 class ActivityLog:
     # Timestamp is a 2xN list, with start times in the first column and stop times in the second column
     def __init__(self):
-        self.timestamps = {}
+        self.log = []
+        self.hrs_per_day = 12
+        self.reset()
 
     def start_activity(self):
-        # Append a new event line marked "Start"
-        # self.timestamps = self.timestamps + [datetime.datetime.now().astimezone(),]
-        pass
+        # Append a new event line marked "activity1_start"
+        self.append_entry("activity1_start")
 
     def stop_activity(self):
-        # Append a new event line marked "Stop"
-        # self.timestamps[-1] = [self.timestamps[-1][-1], datetime.datetime.now().astimezone()]
-        pass
+        # Append a new event line marked "activity1_stop"
+        self.append_entry("activity1_stop")
 
     def reset(self):
-        # Append a new event line marked "Rest"
+        # Append a new event line marked "reset_time"
+        self.append_entry("reset_time")
         pass
 
-    def append_line(self, string):
+    def append_entry(self, pass_str):
+        self.log = self.log + [LogEntry(pass_str, time.time())]
         pass
 
-    def total(self):
-        pass
+    def time_avail(self):
+        time_gathered = self.time_gathered()
+        time_spent = self.time_spent()
+        time_avail = time_gathered - time_spent
+        return time_avail
+
+    def time_gathered(self):
+        return (time.time() - self.last_reset()) * (self.hrs_per_day / 24)
+
+    def time_spent(self):
+        return 0
+
+    def last_reset(self):
+        last_timestamp = 0
+        for x in self.log:
+            if x.event == "reset_time" and x.timestamp > last_timestamp:
+                last_timestamp = x.timestamp
+        return last_timestamp
+
 
     def print(self):
         print(self.toJSON())
 
     def toJSON(self):
-        return json.dumps(self.timestamps,sort_keys=True,indent=4)
+        return json.dumps(self.timestamps, sort_keys=True, indent=4)
 
 
-log = ActivityLog()
-log.timestamps = {
-  "timestamps": [
-    {"event": "reset_time", "timestamp": 1669591502.1348062},
-    {"event": "activity1_start", "timestamp": 1669591585.721765},
-    {"event": "activity1_stop", "timestamp": 1669591605.3921225},
-    {"event": "reset_time", "timestamp": 1669591619.0003414},
-    {"event": "activity1_start", "timestamp": 1669591665.3338575},
-    {"event": "activity1_stop", "timestamp": 1669591707.532953}
-  ]
-}
+class LogEntry:
+    # Represents a single timestamped event in the log
 
-log.start_activity()
-time.sleep(3)
-log.stop_activity()
-time.sleep(2)
-log.start_activity()
-time.sleep(2)
-log.stop_activity()
-log.print()
+    def __init__(self, event_name, timestamp_epoch):
+        self.event = event_name
+        self.timestamp = timestamp_epoch
 
-#before = datetime.datetime.now().astimezone()
-#time.sleep(3)
-#after = datetime.datetime.now().astimezone()
-#delt = after - before
-#is_less = delt < datetime.timedelta(0,4)
-#print("This is text", is_less)
-#Activitimer()
+    def __repr__(self):
+        return '{' + self.event + ' @ ' + str(self.timestamp) + '}'
+
+
+"""    def reset(self):
+        self.time_avail = 0
+        self.last_time_reset = time.time()"""
+
+#    self.time_avail
+#    self.time_earned = (now - last time reset) * budget/24
+#    self.time_spent =
+
+if __name__ == '__main__':
+    #act = ActivityLog()
+
+    """log.timestamps = {
+      "timestamps": [
+        {"event": "reset_time", "timestamp": 1669591502.1348062},
+        {"event": "activity1_start", "timestamp": 1669591585.721765},
+        {"event": "activity1_stop", "timestamp": 1669591605.3921225},
+        {"event": "reset_time", "timestamp": 1669591619.0003414},
+        {"event": "activity1_start", "timestamp": 1669591665.3338575},
+        {"event": "activity1_stop", "timestamp": 1669591707.532953}
+      ]
+    }"""
+
+    """act.log = [
+        LogEntry('reset_time', 1669591502.1348062),
+        LogEntry('activity1_start', 1669591585.721765),
+        LogEntry('activity1_stop', 1669591605.3921225),
+        LogEntry('reset_time', 1669591619.0003414),
+        LogEntry('activity1_start', 1669591665.3338575),
+        LogEntry('activity1_stop', 1669591707.532953),
+    ]"""
+
+    #log_sorted = sorted(act.log, key=lambda x: x.event)
+        #sorted(employees, key=lambda x: x.name)
+
+    # log.start_activity()
+    # time.sleep(3)
+    # log.stop_activity()
+    # time.sleep(2)
+    # log.start_activity()
+    # time.sleep(2)
+    # log.stop_activity()
+    #print(log_sorted)
+    # log.print()
+
+    # before = datetime.datetime.now().astimezone()
+    # time.sleep(3)
+    # after = datetime.datetime.now().astimezone()
+    # delt = after - before
+    # is_less = delt < datetime.timedelta(0,4)
+    # print("This is text", is_less)
+    act = Activitimer()
