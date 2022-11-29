@@ -10,6 +10,7 @@ import tkinter as tk
 from win10toast import ToastNotifier
 from playsound import playsound
 import json
+from os.path import exists
 
 
 class Activitimer:
@@ -83,8 +84,9 @@ class Activitimer:
 class ActivityLog:
     # Timestamp is a 2xN list, with start times in the first column and stop times in the second column
     def __init__(self):
-        self.log = []
         self.hrs_per_day = 1.5
+        self.log = []
+        #self.log = self.try_to_load_file("eventlog.json")
         self.reset()
 
     def activity1_start(self):
@@ -167,10 +169,23 @@ class ActivityLog:
         pass
 
     def save_file(self):
-        pass
+        saved = False
+        with open('eventlog.json', 'w', encoding='utf-8') as f:
+            json.dump(self.toJSON(), f, ensure_ascii=False, indent=4)
+        saved = True
+        return saved
 
-    def load_file(self):
-        pass
+    def load_file(self, filename):
+        with open(filename, 'r', encoding='utf-8') as f:
+            json_data = json.load(f)
+        return json_data
+
+    def try_to_load_file(self, filename):
+        json_data = []
+        if exists(filename):
+            json_data = self.load_file(filename)
+        return json_data
+
 
 
 
@@ -207,8 +222,8 @@ if __name__ == '__main__':
       ]
     }"""
 
-    act = ActivityLog()
-    act.log = [
+    #act = ActivityLog()
+    """act.log = [
         LogEntry('reset_time', 1669591502.1348062),
         LogEntry('activity1_start', 1669591585.721765),
         LogEntry('activity1_stop', 1669591605.3921225),
@@ -216,7 +231,8 @@ if __name__ == '__main__':
         LogEntry('activity1_start', 1669591665.3338575),
         LogEntry('activity1_stop', 1669591707.532953),
     ]
-    act.print()
+    act.save_file()"""
+    #act.print()
 
     #log_sorted = sorted(act.log, key=lambda x: x.event)
         #sorted(employees, key=lambda x: x.name)
@@ -237,4 +253,4 @@ if __name__ == '__main__':
     # delt = after - before
     # is_less = delt < datetime.timedelta(0,4)
     # print("This is text", is_less)
-    # act = Activitimer()
+    act = Activitimer()
