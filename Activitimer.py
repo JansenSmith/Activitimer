@@ -156,7 +156,22 @@ class ActivityLog:
         print(self.toJSON())
 
     def toJSON(self):
-        return json.dumps(self.timestamps, sort_keys=True, indent=4)
+        toJSON = {
+            "eventlog": []
+        }
+        for x in self.log:
+            toJSON["eventlog"].append({"event": x.event, "timestamp": x.timestamp})
+        return json.dumps(toJSON, sort_keys=True, indent=4)
+
+    def fromJSON(self):
+        pass
+
+    def save_file(self):
+        pass
+
+    def load_file(self):
+        pass
+
 
 
 class LogEntry:
@@ -192,14 +207,16 @@ if __name__ == '__main__':
       ]
     }"""
 
-    """    act = [
-        #LogEntry('reset_time', 1669591502.1348062),
+    act = ActivityLog()
+    act.log = [
+        LogEntry('reset_time', 1669591502.1348062),
         LogEntry('activity1_start', 1669591585.721765),
         LogEntry('activity1_stop', 1669591605.3921225),
-        #LogEntry('reset_time', 1669591619.0003414),
+        LogEntry('reset_time', 1669591619.0003414),
         LogEntry('activity1_start', 1669591665.3338575),
         LogEntry('activity1_stop', 1669591707.532953),
-    ]"""
+    ]
+    act.print()
 
     #log_sorted = sorted(act.log, key=lambda x: x.event)
         #sorted(employees, key=lambda x: x.name)
@@ -220,4 +237,4 @@ if __name__ == '__main__':
     # delt = after - before
     # is_less = delt < datetime.timedelta(0,4)
     # print("This is text", is_less)
-    act = Activitimer()
+    # act = Activitimer()
