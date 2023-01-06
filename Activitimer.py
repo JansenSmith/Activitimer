@@ -8,7 +8,7 @@ import datetime
 # import pyzt
 import tkinter as tk
 from win10toast import ToastNotifier
-from playsound import playsound
+# from playsound import playsound
 import json
 from os.path import exists
 
@@ -61,6 +61,7 @@ class Activitimer:
             hours, minutes = divmod(minutes, 60)
 
             self.time_label.config(text=f"Time: {int(hours):02d}:{int(minutes):02d}:{seconds:05.2f}")
+            self.set_button()
             self.root.update()
             time.sleep(0.01)
 
@@ -70,15 +71,27 @@ class Activitimer:
 
     #        if not self.stop_loop:
 
-    def start_activity(self):
+    def set_button(self):
+        act1_latest_state = self.act1.latest_state()
+        if act1_latest_state == 'activity1_start':
+            self.activity_true()
+        elif act1_latest_state == 'activity1_stop' or act1_latest_state == 'reset_time':
+            self.activity_false()
+        pass
+
+    def activity_true(self):
         self.activity = True
-        self.act1.activity1_start()
         self.activity_button.config(text="Stop Activity", command=self.stop_activity)
 
-    def stop_activity(self):
+    def activity_false(self):
         self.activity = False
-        self.act1.activity1_stop()
         self.activity_button.config(text="Start Activity", command=self.start_activity)
+
+    def start_activity(self):
+        self.act1.activity1_start()
+
+    def stop_activity(self):
+        self.act1.activity1_stop()
 
 
 class ActivityLog:
@@ -86,8 +99,13 @@ class ActivityLog:
     def __init__(self):
         self.hrs_per_day = 1.5
         self.log = []
-        #self.log = self.try_to_load_file("eventlog.json")
-        self.reset()
+        loaded = self.try_to_load_file('eventlog.json')
+        if not loaded:
+            self.reset()
+            inject_hrs = 1
+            inject_secs = inject_hrs * 3600
+            self.log[0].timestamp = self.log[0].timestamp - inject_secs * 16
+            self.save_file()
 
     def activity1_start(self):
         # Append a new event line marked "activity1_start"
@@ -100,11 +118,10 @@ class ActivityLog:
     def reset(self):
         # Append a new event line marked "reset_time"
         self.append_entry("reset_time")
-        pass
 
     def append_entry(self, pass_str):
         self.log.append(LogEntry(pass_str, time.time()))
-        pass
+        self.save_file()
 
     def time_avail(self):
         time_gathered = self.time_gathered()
@@ -152,7 +169,10 @@ class ActivityLog:
 
     def sort(self):
         #untested
-        self.log = self.log.sort(key="timestamp")
+        self.log = sorted(self.log, key=lambda x: x.timestamp, reverse=False)
+
+    def latest_state(self):
+        return self.log[-1].event
 
     def print(self):
         print(self.toJSON())
@@ -163,15 +183,17 @@ class ActivityLog:
         }
         for x in self.log:
             toJSON["eventlog"].append({"event": x.event, "timestamp": x.timestamp})
-        return json.dumps(toJSON, sort_keys=True, indent=4)
+        return json.dumps(toJSON, sort_keys=True, indent=None)
 
-    def fromJSON(self):
-        pass
+    def fromJSON(self, json_data):
+        for entry in json_data['eventlog']:
+            self.log.append(LogEntry(entry['event'], entry['timestamp']))
 
     def save_file(self):
         saved = False
         with open('eventlog.json', 'w', encoding='utf-8') as f:
-            json.dump(self.toJSON(), f, ensure_ascii=False, indent=4)
+            #json.dump(self.toJSON(), f, ensure_ascii=False, indent=4)
+            f.write(self.toJSON())
         saved = True
         return saved
 
@@ -181,10 +203,13 @@ class ActivityLog:
         return json_data
 
     def try_to_load_file(self, filename):
+        loaded = False
         json_data = []
         if exists(filename):
             json_data = self.load_file(filename)
-        return json_data
+            self.fromJSON(json_data)
+            loaded = True
+        return loaded
 
 
 
