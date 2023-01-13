@@ -14,8 +14,32 @@ from os.path import exists
 
 
 class Activitimer:
+    """
+    Main timer application class.
+
+    This class represents the main timer application, which includes a graphical
+    user interface (GUI) that allows the user to start and stop a timer for an
+    activity, and displays the elapsed time for the activity in the GUI. The
+    application also includes a notification feature that sends a notification
+    when the elapsed time exceeds a certain threshold.
+
+    Attributes:
+        act1 (ActivityLog): An instance of the ActivityLog class to track
+            start and stop times for activities.
+        activity (bool): A flag to indicate whether the timer is currently
+            running or not.
+        activity_button (tk.Button): A button widget to start and stop the
+            timer.
+        root (tk.Tk): The main window of the application.
+        time_label (tk.Label): A label widget to display the elapsed time
+            for the activity.
+    """
 
     def __init__(self):
+        """
+        Initialize attributes and create GUI.
+        """
+
         self.act1 = ActivityLog()
         font_choice = ("Helvetica", 30)
         self.root = tk.Tk()
@@ -38,15 +62,33 @@ class Activitimer:
         self.root.mainloop()
 
     def start_thread(self):
+        """
+        Start a new thread to run the start() method.
+        """
+
         print("Clock Starting")
         t = threading.Thread(target=self.start)
         t.start()
 
     def alarm(self):
+        """
+        Send a notification using the toast object when the elapsed time
+        for an activity exceeds a certain threshold.
+        """
+
         toast = ToastNotifier()
         toast.show_toast("Activitimer", "Time is up!", duration=3)
 
     def start(self):
+        """
+        Run the timer in a separate thread.
+
+        This method updates the time_label widget to display the elapsed time
+        for the activity, calls the set_button() method to update the
+        activity_button widget based on the current status of the timer, and
+        pauses for a short period of time before repeating.
+        """
+
         while True:
             full_seconds_true = self.act1.time_avail()
 
@@ -72,6 +114,10 @@ class Activitimer:
     #        if not self.stop_loop:
 
     def set_button(self):
+        """
+        Update the activity_button widget based on the current status of the timer.
+        """
+
         act1_latest_state = self.act1.latest_state()
         if act1_latest_state == 'activity1_start':
             self.activity_true()
@@ -80,23 +126,57 @@ class Activitimer:
         pass
 
     def activity_true(self):
+        """
+        Set the activity flag to True and update the activity_button widget to
+        show "Stop Activity" and run the stop_activity() method when clicked.
+        """
+
         self.activity = True
         self.activity_button.config(text="Stop Activity", command=self.stop_activity)
 
     def activity_false(self):
+        """
+        Set the activity flag to False and update the activity_button widget to
+        show "Start Activity" and run the start_activity() method when clicked.
+        """
+
         self.activity = False
         self.activity_button.config(text="Start Activity", command=self.start_activity)
 
     def start_activity(self):
+        """
+        Start a new activity by calling the activity1_start() method of the act1 object.
+        """
+
         self.act1.activity1_start()
 
     def stop_activity(self):
+        """
+        Stop the current activity by calling the activity1_stop() method of the act1 object.
+        """
+
         self.act1.activity1_stop()
 
 
 class ActivityLog:
-    # Timestamp is a 2xN list, with start times in the first column and stop times in the second column
+    """
+    Activity log class.
+
+    This class represents a log of activities, and keeps track of the start and stop
+    times for each activity. It provides methods to start and stop the timer, and
+    calculate the elapsed time for all activities.
+
+    Attributes:
+        hrs_per_day (float): The number of hours per day available for activities.
+        log (list): A list of start and stop times for activities.
+    """
+
     def __init__(self):
+        """
+        Initialize the activity log and try to load the log from the 'eventlog.json' file.
+        If the file is not found or there is an error loading it, reset the timer.
+        """
+
         self.hrs_per_day = 1.5
         self.log = []
         loaded = self.try_to_load_file('eventlog.json')
@@ -108,14 +188,27 @@ class ActivityLog:
             self.save_file()
 
     def activity1_start(self):
-        # Append a new event line marked "activity1_start"
+        """
+        Start a new activity by adding a new entry to the log list with the current
+        time as the start time.
+        Append a new event line marked "activity1_start"
+        """
+
         self.append_entry("activity1_start")
 
     def activity1_stop(self):
-        # Append a new event line marked "activity1_stop"
+        """
+        Stop the current activity by adding the current time as the stop time to
+        the latest entry in the log list.
+        Append a new event line marked "activity1_stop"
+        """
         self.append_entry("activity1_stop")
 
     def reset(self):
+        """
+        Reset the activity log and set the hrs_per_day attribute to 1.5.
+        """
+
         # Append a new event line marked "reset_time"
         self.append_entry("reset_time")
 
@@ -124,6 +217,15 @@ class ActivityLog:
         self.save_file()
 
     def time_avail(self):
+        """
+        Calculate the elapsed time for all activities in the log list and return the
+        remaining time based on the hrs_per_day attribute.
+
+        This method iterates through the log list and adds up the elapsed time for
+        each activity. It then subtracts the total elapsed time from the hrs_per_day
+        attribute to get the remaining time.
+        """
+
         time_gathered = self.time_gathered()
         time_spent = self.time_spent()
         time_avail = time_gathered - time_spent
@@ -172,6 +274,14 @@ class ActivityLog:
         self.log = sorted(self.log, key=lambda x: x.timestamp, reverse=False)
 
     def latest_state(self):
+        """
+        Return the current state of the timer based on the latest entry in the log list.
+
+        If the latest entry has a start time but no stop time, return 'activity1_start'.
+        If the latest entry has both a start and stop time, return 'activity1_stop'.
+        If the log list is empty, return 'reset_time'.
+        """
+
         return self.log[-1].event
 
     def print(self):
@@ -203,6 +313,19 @@ class ActivityLog:
         return json_data
 
     def try_to_load_file(self, filename):
+        """
+        Try to load the activity log from the specified file.
+
+        If the file is found and successfully loaded, return True. If the file
+        is not found or there is an error loading it, return False.
+
+        Args:
+            filename (str): The name of the file to load the log from.
+
+        Returns:
+            bool: True if the file was found and successfully loaded, False otherwise.
+        """
+
         loaded = False
         json_data = []
         if exists(filename):
@@ -224,58 +347,6 @@ class LogEntry:
     def __repr__(self):
         return '{' + self.event + ' @ ' + str(self.timestamp) + '}'
 
-
-"""    def reset(self):
-        self.time_avail = 0
-        self.last_time_reset = time.time()"""
-
-#    self.time_avail
-#    self.time_earned = (now - last time reset) * budget/24
-#    self.time_spent =
-
 if __name__ == '__main__':
-    #act = ActivityLog()
 
-    """log.timestamps = {
-      "timestamps": [
-        {"event": "reset_time", "timestamp": 1669591502.1348062},
-        {"event": "activity1_start", "timestamp": 1669591585.721765},
-        {"event": "activity1_stop", "timestamp": 1669591605.3921225},
-        {"event": "reset_time", "timestamp": 1669591619.0003414},
-        {"event": "activity1_start", "timestamp": 1669591665.3338575},
-        {"event": "activity1_stop", "timestamp": 1669591707.532953}
-      ]
-    }"""
-
-    #act = ActivityLog()
-    """act.log = [
-        LogEntry('reset_time', 1669591502.1348062),
-        LogEntry('activity1_start', 1669591585.721765),
-        LogEntry('activity1_stop', 1669591605.3921225),
-        LogEntry('reset_time', 1669591619.0003414),
-        LogEntry('activity1_start', 1669591665.3338575),
-        LogEntry('activity1_stop', 1669591707.532953),
-    ]
-    act.save_file()"""
-    #act.print()
-
-    #log_sorted = sorted(act.log, key=lambda x: x.event)
-        #sorted(employees, key=lambda x: x.name)
-
-    # log.start_activity()
-    # time.sleep(3)
-    # log.stop_activity()
-    # time.sleep(2)
-    # log.start_activity()
-    # time.sleep(2)
-    # log.stop_activity()
-    #print(log_sorted)
-    # log.print()
-
-    # before = datetime.datetime.now().astimezone()
-    # time.sleep(3)
-    # after = datetime.datetime.now().astimezone()
-    # delt = after - before
-    # is_less = delt < datetime.timedelta(0,4)
-    # print("This is text", is_less)
     act = Activitimer()
